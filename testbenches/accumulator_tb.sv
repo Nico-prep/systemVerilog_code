@@ -29,6 +29,11 @@ module accumulator_tb;
         .clock(clock)
     );
 
+    initial begin
+        $dumpfile("build/accumulator_tb.vcd");
+        $dumpvars(0, accumulator_tb);
+    end
+
     // Clock generation
     initial begin
         clock = 0;
@@ -42,7 +47,7 @@ module accumulator_tb;
         in         = 16'd0;
         load       = LOAD_VALUE;
         load_en    = 1'b0;
-        rst        = 1'b0;
+        rst        = 1'b1;   // start in reset for deterministic initialization
         expected   = 16'd0;
         cycle_count = 0;
 
