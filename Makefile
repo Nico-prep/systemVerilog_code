@@ -1,48 +1,35 @@
-MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-PROJECT_DIR := $(abspath $(MAKEFILE_DIR))
-SRC_DIR := $(PROJECT_DIR)
-MODULE_DIR := $(SRC_DIR)/modules
-TB_DIR := $(SRC_DIR)/testbenches
-BUILD_DIR := $(PROJECT_DIR)/build
-TB_TOP ?= accumulator_tb
-TB_SRC := $(TB_DIR)/$(TB_TOP).sv
-RTL_SRC := $(MODULE_DIR)/accumulator.svh
-VVP_FILE := $(BUILD_DIR)/$(TB_TOP).vvp
-VCD_FILE := $(BUILD_DIR)/$(TB_TOP).vcd
-IVERILOG ?= iverilog
-VVP ?= vvp
-GTKWAVE ?= gtkwave
-
 .PHONY: all build run wave clean help
+
+PROJECTS := accumulator
 
 all: clean run
 
-build: $(VVP_FILE)
+build:
+	@for p in $(PROJECTS); do \
+		$(MAKE) -C $$p build; \
+	done
 
-$(BUILD_DIR):
-	mkdir -p $@
+run:
+	@for p in $(PROJECTS); do \
+		$(MAKE) -C $$p run; \
+	done
 
-$(VVP_FILE): $(RTL_SRC) $(TB_SRC) | $(BUILD_DIR)
-	$(IVERILOG) -g2012 -o $@ $(TB_SRC) $(RTL_SRC)
-
-run: $(VVP_FILE)
-	$(VVP) $(VVP_FILE)
-
-wave: $(VVP_FILE)
-	@echo "Opening waveform viewer for $(VCD_FILE)"
-	@if command -v $(GTKWAVE) >/dev/null 2>&1; then \
-		$(GTKWAVE) $(VCD_FILE) & \
-	else \
-		echo "GTKWave not found. Install it with: sudo apt install gtkwave"; \
-	fi
+wave:
+	@for p in $(PROJECTS); do \
+		$(MAKE) -C $$p wave; \
+	done
 
 clean:
-	rm -rf $(BUILD_DIR)
+	@for p in $(PROJECTS); do \
+		$(MAKE) -C $$p clean; \
+	done
 
 help:
 	@echo "Available targets:"
-	@echo "  make build   - compile the testbench"
-	@echo "  make run     - compile and run the simulation"
-	@echo "  make wave    - open the waveform viewer (requires GTKWave)"
-	@echo "  make clean   - remove generated files"
+	@echo "  make build   - build all projects"
+	@echo "  make run     - run all projects"
+	@echo "  make wave    - open waveforms for all projects"
+	@echo "  make clean   - clean all projects"
 	@echo "  make help    - show this help"
+	@echo ""
+	@echo "Each project has its own Makefile inside its directory."
