@@ -19,3 +19,12 @@ To work on a single project, go into its folder and run its local Makefile, for 
 
 - `make -C accumulator build`
 - `make -C accumulator run`
+
+For the accumulator project, there are two testbenches:
+
+- unsigned accumulator: `make -C accumulator run`
+- signed accumulator: `make -C accumulator signed`
+
+You can also build only the signed testbench with:
+
+- `make -C accumulator signed-build`

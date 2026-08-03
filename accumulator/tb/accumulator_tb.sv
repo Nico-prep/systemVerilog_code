@@ -55,6 +55,7 @@ module accumulator_tb;
         expected_ovl_det = 1'b0;
         cycle_count = 0;
 
+        $display("running unsigned TB");
         $display("time(ns) cycle rst load_en load in expected out ovl_det");
         $monitor("%0t %0d %b %b %0d %0d %0d %0d %b", $time, cycle_count, rst, load_en, load, in, expected, out, expected_ovl_det);
 
