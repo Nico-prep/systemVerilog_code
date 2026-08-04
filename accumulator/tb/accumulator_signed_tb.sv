@@ -5,11 +5,15 @@ module accumulator_tb;
     // Parameters for easy modification
     parameter int CYCLE_TIME_NS   = 10;      // 100 MHz clock
     parameter int HALF_CYCLE_NS   = CYCLE_TIME_NS / 2;
-    parameter int TOTAL_CYCLES    = 200;
+    parameter int TOTAL_CYCLES    = 400;
     parameter int RESET_CYCLE     = 50;
-    parameter int LOAD_CYCLE      = 100;
-    parameter int LOAD_VALUE      = 10000; 
-    parameter int SWAP_SIGN_CYCLE = 120;
+    parameter int LOAD_CYCLE_1      = 100;
+    parameter int LOAD_VALUE_1      = 32767 - 300; 
+    parameter int LOAD_CYCLE_2      = 200;
+    parameter int LOAD_VALUE_2      = -32768 +400; 
+    // value to drive onto `in` immediately after loading LOAD_VALUE_2
+   // parameter int LOAD_IN_AFTER     = -1000;
+    parameter int SWAP_SIGN_CYCLE = 150;
 
     logic signed [15:0] in;
     logic signed [15:0] load;
@@ -34,7 +38,9 @@ module accumulator_tb;
     );
 
 
-    logic signed [16:0] expected;
+    int signed   expected;
+    int signed   in_val;
+    int signed      next;
     logic        expected_ovl_det_pos;
     logic        expected_ovl_det_neg;
     int cycle_count;
@@ -55,11 +61,13 @@ module accumulator_tb;
     // Stimulus
     initial begin
         in                   = 16'd0;
-        load                 = LOAD_VALUE;
+        in_val               = 0;
+        load                 = LOAD_VALUE_1;
         load_en              = 1'b0;
         rst                  = 1'b1;   // start in reset for deterministic initialization
-        input_sign_plus      = 1'b0;
-        expected             = 17'd0;
+        input_sign_plus      = 1'b1;
+        expected             = 0;
+        next = 0;
         expected_ovl_det_pos = 1'b0;
         expected_ovl_det_neg = 1'b0;
         cycle_count          = 0;
@@ -73,13 +81,15 @@ module accumulator_tb;
 
         while (cycle_count < TOTAL_CYCLES) begin
             
-            // default stimulus
+            // default stimulus: set base load (may be overridden below)
+            load = LOAD_VALUE_1;
             if (input_sign_plus) begin
-                in = in + 16'd1;
+                in = in + 1'd1;
+                in_val = in_val +1;
             end else begin
-                in = in - 16'd1;
+                in = in - 1'd1;
+                in_val = in_val -1;
             end
-            load = LOAD_VALUE;
 
             // reset active for one cycle at RESET_CYCLE
             if (cycle_count == RESET_CYCLE) begin
@@ -88,9 +98,15 @@ module accumulator_tb;
                 rst = 1'b0;
             end
 
-            // load active for one cycle at LOAD_CYCLE
-            if (cycle_count == LOAD_CYCLE) begin
+            // load active for one cycle at LOAD_CYCLE_1 or LOAD_CYCLE_2
+            if ((cycle_count == LOAD_CYCLE_1) || (cycle_count == LOAD_CYCLE_2)) begin
                 load_en = 1'b1;
+                if (cycle_count == LOAD_CYCLE_2) begin
+                    load = LOAD_VALUE_2;
+                    // force a negative input immediately after the second load
+                    //in = LOAD_IN_AFTER;
+                    //input_sign_plus = 1'b0;
+                end
             end else begin
                 load_en = 1'b0;
             end
@@ -98,43 +114,37 @@ module accumulator_tb;
             // change input sign for signed accumulator
             if (cycle_count == SWAP_SIGN_CYCLE) begin
                 input_sign_plus = ~input_sign_plus;
+                in = ~in +1;
+                in_val = -in_val;
             end
 
             // compute expected value for next cycle
             if (rst) begin
-                expected = 17'h0;
+                expected = 0;
                 expected_ovl_det_pos = 1'b0;
                 expected_ovl_det_neg = 1'b0;
             end else if (load_en) begin
-                expected = load;
+                expected = load; 
                 expected_ovl_det_pos = 1'b0;
                 expected_ovl_det_neg = 1'b0;
             end else begin
-                if (expected_ovl_det_pos) begin
-                    $display("positive overload condition");
-                    expected = 17'h7FFF;
+                next = expected+in_val;
+                expected_ovl_det_pos = 1'b0;
+                expected_ovl_det_neg = 1'b0;
+                if (next > 32767) begin
+                    $display("overload expected");
+                    expected = 32767;
                     expected_ovl_det_pos = 1'b1;
                     expected_ovl_det_neg = 1'b0;
-                end else  if (expected_ovl_det_neg) begin
-                    $display("negative overload condition");
-                    expected = 17'h8000;
-                    expected_ovl_det_pos = 1'b0;
-                    expected_ovl_det_neg = 1'b1;    
-                end else if (expected + in > 17'sh7FFF) begin
+                end else if (next < -32768) begin
                     $display("overload expected");
-                    expected = 17'sh7FFF;
-                    expected_ovl_det_pos = 1'b1;
-                    expected_ovl_det_neg = 1'b0;
-                end else if (expected + in < 17'sh10000) begin
-                    $display("overload expected");
-                    expected = 17'sh10000;
+                    expected = -32768;
                     expected_ovl_det_pos = 1'b0;
-                    expected_ovl_det_neg = 1'b1;
-                end else begin
-                    $display("overload not expected");
-                    expected = expected + in;
-                    expected_ovl_det_pos = 1'b0;
-                    expected_ovl_det_neg = 1'b0;
+                    expected_ovl_det_neg = 1'b1;  
+                end else  begin
+
+                    expected = next;
+
                 end
             end
 
