@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module accumulator_tb;
+module accumulator_signed_tb;
 
     // Parameters for easy modification
     parameter int CYCLE_TIME_NS   = 10;      // 100 MHz clock
@@ -39,15 +39,14 @@ module accumulator_tb;
 
 
     int signed   expected;
-    int signed   in_val;
     int signed      next;
     logic        expected_ovl_det_pos;
     logic        expected_ovl_det_neg;
     int cycle_count;
 
     initial begin
-        $dumpfile("build/accumulator_tb.vcd");
-        $dumpvars(0, accumulator_tb);
+        $dumpfile("build/accumulator_signed_tb.vcd");
+        $dumpvars(0, accumulator_signed_tb);
     end
 
     // Clock generation
@@ -61,7 +60,6 @@ module accumulator_tb;
     // Stimulus
     initial begin
         in                   = 16'd0;
-        in_val               = 0;
         load                 = LOAD_VALUE_1;
         load_en              = 1'b0;
         rst                  = 1'b1;   // start in reset for deterministic initialization
@@ -85,10 +83,8 @@ module accumulator_tb;
             load = LOAD_VALUE_1;
             if (input_sign_plus) begin
                 in = in + 1'd1;
-                in_val = in_val +1;
             end else begin
                 in = in - 1'd1;
-                in_val = in_val -1;
             end
 
             // reset active for one cycle at RESET_CYCLE
@@ -115,7 +111,6 @@ module accumulator_tb;
             if (cycle_count == SWAP_SIGN_CYCLE) begin
                 input_sign_plus = ~input_sign_plus;
                 in = ~in +1;
-                in_val = -in_val;
             end
 
             // compute expected value for next cycle
@@ -128,7 +123,7 @@ module accumulator_tb;
                 expected_ovl_det_pos = 1'b0;
                 expected_ovl_det_neg = 1'b0;
             end else begin
-                next = expected+in_val;
+                next = expected+$signed(in);
                 expected_ovl_det_pos = 1'b0;
                 expected_ovl_det_neg = 1'b0;
                 if (next > 32767) begin
