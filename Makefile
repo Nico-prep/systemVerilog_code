@@ -1,6 +1,6 @@
 .PHONY: all build run wave clean help
 
-PROJECTS := accumulator
+PROJECTS := accumulator, efm, counter
 
 all: clean run
 
