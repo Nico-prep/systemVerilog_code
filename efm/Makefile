@@ -1,12 +1,11 @@
 MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 PROJECT_DIR := $(abspath $(MAKEFILE_DIR))
 RTL_DIR := $(PROJECT_DIR)/rtl
-ACCUM_RTL_DIR := $(abspath $(PROJECT_DIR)/../accumulator/rtl)
 TB_DIR := $(PROJECT_DIR)/tb
 BUILD_DIR := $(PROJECT_DIR)/build
 TB_TOP ?= efm_tb
 TB_SRC := $(TB_DIR)/$(TB_TOP).sv
-RTL_SRC := $(RTL_DIR)/efm.svh $(ACCUM_RTL_DIR)/accumulator_parametric.svh
+RTL_SRC := $(RTL_DIR)/efm.svh 
 
 VVP_FILE := $(BUILD_DIR)/$(TB_TOP).vvp
 VCD_FILE := $(BUILD_DIR)/$(TB_TOP).vcd
@@ -31,7 +30,7 @@ run: $(VVP_FILE)
 
 wave: $(VVP_FILE)
 	@echo "Opening waveform viewer for $(VCD_FILE)"
-	@if command -v $(GTKWAVE) >/dev/null 2>&1; then $(GTKWAVE) $(VCD_FILE) -s post_processing/waves.gtkw \
+	@if command -v $(GTKWAVE) >/dev/null 2>&1; then $(GTKWAVE) $(VCD_FILE) & \
 	else \
 		echo "GTKWave not found. Install it with: sudo apt install gtkwave"; \
 	fi
