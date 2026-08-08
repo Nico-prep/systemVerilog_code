@@ -1,0 +1,30 @@
+# =========================
+# Python
+# =========================
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# =========================
+# SystemVerilog
+# =========================
+
+# Waveforms
+*.vcd
+
+# Icarus Verilog compiled output
+*.vvp
+
+# Other common simulation outputs
+*.log
